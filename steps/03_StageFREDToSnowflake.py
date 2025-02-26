@@ -36,7 +36,7 @@ for stage, s3_path in STAGES.items():
     CREATE OR REPLACE STAGE {stage}
     STORAGE_INTEGRATION = fred_s3_integration
     URL = '{s3_path}'
-    FILE_FORMAT = (TYPE = CSV FIELD_OPTIONALLY_ENCLOSED_BY='"' SKIP_HEADER = 1);
+    FILE_FORMAT = CSV_FORMAT;
     """
     session.sql(create_stage_sql).collect()
     print(f"✅ Created/Verified stage: {stage}")
