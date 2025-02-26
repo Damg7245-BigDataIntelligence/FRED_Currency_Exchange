@@ -2,3 +2,5 @@ requests
 pandas
 boto3
 python-dotenv
+snowflake-snowpark-python
+snowflake-cli-labs

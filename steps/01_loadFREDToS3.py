@@ -93,29 +93,3 @@ for series_id in series_list:
     df = fetch_series_data(series_id)
     upload_to_s3(df, series_id)
 
-
-
-
-# import boto3
-# import os
-# from dotenv import load_dotenv
-
-# # Load environment variables from .env file
-# load_dotenv()
-
-# # Fetch credentials from environment variables
-# aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-# aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-# bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
-
-# # Initialize S3 client
-# s3_client = boto3.client(
-#     's3',
-#     aws_access_key_id=aws_access_key,
-#     aws_secret_access_key=aws_secret_key
-# )
-
-# # List objects in the bucket
-# response = s3_client.list_objects_v2(Bucket=bucket_name)
-# print(response)
-
