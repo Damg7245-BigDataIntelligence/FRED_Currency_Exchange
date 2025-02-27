@@ -71,6 +71,38 @@ for stage in STAGES:
         """
         session.sql(copy_into_sql).collect()
         print(f"✅ Data loaded into {table_name}")
+        
+        # Create stream dynamically
+        create_stream_sql = f"""
+        CREATE OR REPLACE STREAM {schema_name}.{table_name}_STREAM
+        ON TABLE {schema_name}.{table_name}
+        APPEND_ONLY = TRUE;
+        """
+        
+        # Create stream dynamically
+        create_stream_sql = f"""
+        CREATE OR REPLACE STREAM {schema_name}.{table_name}_STREAM
+        ON TABLE {schema_name}.{table_name}
+        APPEND_ONLY = TRUE;
+        """
+        session.sql(create_stream_sql).collect()
+        print(f"✅ Created stream: {schema_name}.{table_name}_STREAM")
+
+        # Check if the stream has new data before consuming
+        check_stream_sql = f"SELECT COUNT(*) FROM {schema_name}.{table_name}_STREAM;"
+        stream_count = session.sql(check_stream_sql).collect()[0][0]
+
+        if stream_count > 0:
+            consume_stream_sql = f"""
+            INSERT INTO {schema_name}.{table_name}
+            SELECT * FROM {schema_name}.{table_name}_STREAM;
+            """
+            session.sql(consume_stream_sql).collect()
+            print(f"✅ New data inserted into {table_name} from stream {table_name}_STREAM")
+        else:
+            print(f"⚠️ No new data in {table_name}_STREAM, skipping insert.")
+
+
 
 # Close session
 session.close()
