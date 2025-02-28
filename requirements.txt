@@ -7,3 +7,6 @@ snowflake-cli-labs
 pytest
 streamlit
 jaraco.text
+plotly
+importlib-metadata
+platformdirs

@@ -30,43 +30,43 @@ CREATE OR REPLACE NOTEBOOK IDENTIFIER('"FRED_DB"."INTEGRATIONS"."{{env}}_analyti
 ALTER NOTEBOOK "FRED_DB"."INTEGRATIONS"."{{env}}_analytics" ADD LIVE VERSION FROM LAST;
 
 -- Deploy orchestration DAG notebook to INTEGRATIONS schema
-CREATE OR REPLACE PROCEDURE INTEGRATIONS.CREATE_CURRENCY_DAG()
-RETURNS VARCHAR
-LANGUAGE SQL
-AS
-$$
-DECLARE
-  ENV VARCHAR DEFAULT '{{env}}';
-  warehouse_name VARCHAR DEFAULT 'FRED_WH';
-  dag_name VARCHAR DEFAULT CONCAT(ENV, '_FRED_CURRENCY_PIPELINE');
-BEGIN
-  -- Create the DAG using Snowflake's SQL API
-  EXECUTE IMMEDIATE 'CREATE OR REPLACE TASK ' || dag_name || '_LOAD_RAW_DATA_TASK
-    WAREHOUSE = ''' || warehouse_name || '''
-    SCHEDULE = ''USING CRON 0 0 * * * UTC''
-    AS
-    EXECUTE NOTEBOOK "FRED_DB"."INTEGRATIONS"."' || ENV || '_load_raw_data"()';
+-- CREATE OR REPLACE PROCEDURE INTEGRATIONS.CREATE_CURRENCY_DAG()
+-- RETURNS VARCHAR
+-- LANGUAGE SQL
+-- AS
+-- $$
+-- DECLARE
+--   ENV VARCHAR DEFAULT '{{env}}';
+--   warehouse_name VARCHAR DEFAULT 'FRED_WH';
+--   dag_name VARCHAR DEFAULT CONCAT(ENV, '_FRED_CURRENCY_PIPELINE');
+-- BEGIN
+--   -- Create the DAG using Snowflake's SQL API
+--   EXECUTE IMMEDIATE 'CREATE OR REPLACE TASK ' || dag_name || '_LOAD_RAW_DATA_TASK
+--     WAREHOUSE = ''' || warehouse_name || '''
+--     SCHEDULE = ''USING CRON 0 0 * * * UTC''
+--     AS
+--     EXECUTE NOTEBOOK "FRED_DB"."INTEGRATIONS"."' || ENV || '_load_raw_data"()';
     
-  EXECUTE IMMEDIATE 'CREATE OR REPLACE TASK ' || dag_name || '_HARMONIZE_DATA_TASK
-    WAREHOUSE = ''' || warehouse_name || '''
-    AFTER ' || dag_name || '_LOAD_RAW_DATA_TASK
-    AS
-    EXECUTE NOTEBOOK "FRED_DB"."INTEGRATIONS"."' || ENV || '_harmonize_data"()';
+--   EXECUTE IMMEDIATE 'CREATE OR REPLACE TASK ' || dag_name || '_HARMONIZE_DATA_TASK
+--     WAREHOUSE = ''' || warehouse_name || '''
+--     AFTER ' || dag_name || '_LOAD_RAW_DATA_TASK
+--     AS
+--     EXECUTE NOTEBOOK "FRED_DB"."INTEGRATIONS"."' || ENV || '_harmonize_data"()';
     
-  EXECUTE IMMEDIATE 'CREATE OR REPLACE TASK ' || dag_name || '_ANALYTICS_TASK
-    WAREHOUSE = ''' || warehouse_name || '''
-    AFTER ' || dag_name || '_HARMONIZE_DATA_TASK
-    AS
-    EXECUTE NOTEBOOK "FRED_DB"."INTEGRATIONS"."' || ENV || '_analytics"()';
+--   EXECUTE IMMEDIATE 'CREATE OR REPLACE TASK ' || dag_name || '_ANALYTICS_TASK
+--     WAREHOUSE = ''' || warehouse_name || '''
+--     AFTER ' || dag_name || '_HARMONIZE_DATA_TASK
+--     AS
+--     EXECUTE NOTEBOOK "FRED_DB"."INTEGRATIONS"."' || ENV || '_analytics"()';
     
-  -- Enable the tasks
-  EXECUTE IMMEDIATE 'ALTER TASK ' || dag_name || '_LOAD_RAW_DATA_TASK RESUME';
-  EXECUTE IMMEDIATE 'ALTER TASK ' || dag_name || '_HARMONIZE_DATA_TASK RESUME';
-  EXECUTE IMMEDIATE 'ALTER TASK ' || dag_name || '_ANALYTICS_TASK RESUME';
+--   -- Enable the tasks
+--   EXECUTE IMMEDIATE 'ALTER TASK ' || dag_name || '_LOAD_RAW_DATA_TASK RESUME';
+--   EXECUTE IMMEDIATE 'ALTER TASK ' || dag_name || '_HARMONIZE_DATA_TASK RESUME';
+--   EXECUTE IMMEDIATE 'ALTER TASK ' || dag_name || '_ANALYTICS_TASK RESUME';
   
-  RETURN 'Created and enabled DAG: ' || dag_name;
-END;
-$$;
+--   RETURN 'Created and enabled DAG: ' || dag_name;
+-- END;
+-- $$;
 
--- Call the procedure to create the DAG
-CALL INTEGRATIONS.CREATE_CURRENCY_DAG();
+-- -- Call the procedure to create the DAG
+-- CALL INTEGRATIONS.CREATE_CURRENCY_DAG();
