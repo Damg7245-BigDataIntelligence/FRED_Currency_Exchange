@@ -3,13 +3,6 @@ import pandas as pd
 import os
 from snowflake.snowpark import Session
 
-try:
-    import plotly.express as px
-except ImportError:
-    st.write("Installing plotly...")
-    os.system(f"{sys.executable} -m pip install plotly")
-    import plotly.express as px
-    
 # Page configuration
 st.set_page_config(
     page_title="FRED Currency Exchange Analytics",
@@ -94,7 +87,7 @@ try:
     st.subheader(f"{data_type} Currency Exchange Data")
     st.dataframe(df, use_container_width=True)
     
-    # Create visualizations
+    # Create visualizations using Streamlit's native charts
     st.subheader(f"{data_type} Currency Exchange Trends")
     
     # Create tabs for different visualizations
@@ -102,19 +95,12 @@ try:
     
     with tab1:
         # Line chart for exchange rates
-        fig = px.line(
+        st.line_chart(
             df_plot, 
-            x=date_col, 
+            x=date_col,
             y=list(metrics.values()),
-            labels={
-                "value": "Exchange Rate",
-                "variable": "Currency Pair"
-            },
-            title=f"{data_type} Exchange Rates",
-            color_discrete_sequence=px.colors.qualitative.Bold
+            use_container_width=True
         )
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
     
     with tab2:
         # Rate change percentages
@@ -131,20 +117,12 @@ try:
                 "US-UK Rate Change %": "rate_change_percent_exusuk_converted"
             }
         
-        fig = px.bar(
+        st.bar_chart(
             df_plot,
             x=date_col,
             y=list(change_metrics.values()),
-            barmode="group",
-            labels={
-                "value": "Rate Change %",
-                "variable": "Currency Pair"
-            },
-            title=f"{data_type} Rate Change Percentages",
-            color_discrete_sequence=px.colors.qualitative.Safe
+            use_container_width=True
         )
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
     
     with tab3:
         # Volatility metrics
@@ -161,19 +139,12 @@ try:
                 "US-UK Volatility": "volatility_exusuk_converted"
             }
         
-        fig = px.area(
+        st.area_chart(
             df_plot,
             x=date_col,
             y=list(volatility_metrics.values()),
-            labels={
-                "value": "Volatility",
-                "variable": "Currency Pair"
-            },
-            title=f"{data_type} Volatility Metrics",
-            color_discrete_sequence=px.colors.qualitative.Pastel
+            use_container_width=True
         )
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Error fetching data: {e}")
