@@ -1,64 +1,63 @@
 # FRED_Currency_Exchange
 
-# **SEC Financial Dataset Processing System**
-This project automates the ingestion, transformation, and validation of SEC financial datasets using **Snowflake, Apache Airflow, DBT, FastAPI, and Streamlit**. It ensures seamless data processing, integrity checks, and interactive financial data visualization.
+# **FRED Currency Exchange Processing System**
+This project automates the ingestion, transformation, and validation of currency exchange rate data from **FRED** using **Snowflake, Apache Airflow, DBT, FastAPI, and Streamlit**. It ensures seamless data processing, integrity checks, and interactive financial data visualization.
 
 ---
 ## **📌 Project Resources**
-- 📘 **Google Codelab:** [CodeLab](https://codelabs-preview.appspot.com/?file_id=1mBO6xQxSLutdNoxKHmQyAxqUgg8YdiZU9MckpMwRXxM#6)
-- 🌐 **App (Streamlit Cloud):** [Streamlit Link](https://dynaledger-ixvkclqgn7gofx9bzf6erk.streamlit.app/)
-- 🌍 **Apache Airflow:** [Airflow](http://34.145.156.207:8080/)
-- 🎥 **YouTube Demo:** [YouTube Video](https://youtu.be/7x4iwCADyJA)
+- 📘 **Google Codelab:** [CodeLab](https://codelabs.example.com/fred-currency-exchange)
+- 🌐 **App (Streamlit Cloud):** [Streamlit Link](https://fred-currency-exchange.streamlit.app/)
+- 🎥 **YouTube Demo:** [YouTube Video](https://youtu.be/your-demo-video)
 
 ---
-
 ## **📌 Technologies Used**
-![Snowflake](https://img.shields.io/badge/-Snowflake-56CCF2?style=for-the-badge&logo=snowflake&logoColor=white)
-![Apache Airflow](https://img.shields.io/badge/-Apache_Airflow-017CEE?style=for-the-badge&logo=apache-airflow&logoColor=white)
-![DBT](https://img.shields.io/badge/-DBT-FE6829?style=for-the-badge&logo=dbt&logoColor=white)
-![FastAPI](https://img.shields.io/badge/-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Streamlit](https://img.shields.io/badge/-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Snowflake](https://img.shields.io/badge/-Snowflake-56CCF2?style=for-the-badge&logo=snowflake&logoColor=white)  
+![Streamlit](https://img.shields.io/badge/-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)  
 ![AWS S3](https://img.shields.io/badge/-AWS_S3-569A31?style=for-the-badge&logo=amazon-s3&logoColor=white)
 
 ---
-
 ## **📌 Architecture Diagram**
 <p align="center">
-  <img src="https://github.com/Damg7245-BigDataIntelligence/DynaLedger/blob/main/architecture-diagram/architecture_diagram.jpg" 
+  <img src="https://github.com/yourusername/yourrepo/blob/main/architecture-diagram/fred_architecture_diagram.jpg" 
        alt="Architecture Diagram" width="600">
 </p>
 
 ---
-
 ## **📌 Project Flow**
 
-### **Step 1: User Query Selection**
-- Users have three options to select from **JSON, RAW, and Fact Tables** to query SEC financial data.
-- Additionally, users can write and execute **custom SQL queries** on the SEC dataset.
-- The selected request is sent to **Snowflake via FastAPI**.
+### **Step 1: Dashboard & Environment Selection**
+- Users are presented with an interactive **Streamlit dashboard**.
+- On the dashboard, users can select the environment: **DEV** or **PROD**.
+- This selection determines the configuration and data views they access from Snowflake.
 
 ### **Step 2: Data Pipeline Execution**
-- **Three automated pipelines** are running for **JSON, RAW, and DBT** transformations.
-- Each pipeline ensures structured data processing and ingestion into Snowflake.
+- **Multiple automated pipelines** operate in parallel:
+  - **Raw Pipeline:** Ingests and stages raw JSON data from the FRED API.
+  - **Harmonization Pipeline:** Transforms raw data into a structured, cleaned format using Snowpark Python.
+  - **Analytics Pipeline:** Aggregates precomputed metrics for daily, weekly, and monthly performance.
+- Each pipeline ensures robust and structured data processing and seamless ingestion into Snowflake.
 
 ### **Step 3: Fetching & Displaying Data**
-- If the user selects **RAW data**, the processed data from the **RAW pipeline in Snowflake** is fetched.
-- The retrieved data is displayed in **tabular format** along with **graphical representations**.
+- Based on the selected environment, the dashboard displays the corresponding processed data:
+  - **Raw Data:** Directly from the raw ingestion pipeline.
+  - **Harmonized Data:** From the refined, cleaned data pipeline.
+  - **Analytics Data:** Precomputed metrics are showcased via tables and interactive graphs.
+- The dashboard enables users to explore data insights without writing SQL queries.
 
-### **Step 4: JSON and Fact Table Processing**
-- If the user selects **JSON** and **Fact Table**, the respective pipeline in Snowflake processes the data.
-- The transformed data is displayed in **tables and graphs** for better visualization.
+### **Step 4: Additional Data Processing**
+- Further data transformations are applied:
+  - **Harmonized Data:** Ensures consistency with standardized timestamps and normalized currency rates.
+  - **Analytics Data:** Enriched with volatility metrics and performance indicators.
+- These datasets are updated regularly via automated Snowflake tasks and integrated CI/CD pipelines.
 
 ---
-
 ## **📌 Contributions**
-| **Name** | **Contribution** |
-|----------|----------------|
-| **Janvi Bharatkumar Chitroda** | 33% - **DBT Data Loading**, **Snowflake**, **DBT Airflow Pipeline**, **Cloud Deployment**, **S3 Connection**. |
-| **Ketki Mude** | 33% - **JSON Conversion & Data Loading**, **Snowflake**, **S3 Connection**, **JSON Airflow Pipeline**. |
-| **Sahil Mutha** | 33% - **RAW Data Loading**, **Snowflake**, **S3 Connection**, **Streamlit**, **FastAPI**, **RAW Airflow Pipeline Deployment**. |
+| **Name**                           | **Contribution**                                                                                             |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| **Janvi Bharatkumar Chitroda**     | 33% - **Architecture & Data Pipeline Design**, overseeing ingestion from the FRED API, transformation using Snowpark, and Snowflake integration. |
+| **Ketki Mude**                     | 33% - **Dashboard & Environment Development**, focusing on the Streamlit dashboard for DEV/PROD selection and user experience.         |
+| **Sahil Mutha**                    | 33% - **Task Orchestration & Pipeline Automation**, managing Apache Airflow, DBT workflows, and automated data updates. |
 
 ---
-
 ## **📌 Attestation**
 **WE CERTIFY THAT WE HAVE NOT USED ANY OTHER STUDENTS' WORK IN OUR ASSIGNMENT AND COMPLY WITH THE POLICIES OUTLINED IN THE STUDENT HANDBOOK.**
