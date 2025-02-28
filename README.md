@@ -1,7 +1,7 @@
 # FRED_Currency_Exchange
 
 # **FRED Currency Exchange Processing System**
-This project automates the ingestion, transformation, and validation of currency exchange rate data from **FRED** using **Snowflake, Apache Airflow, DBT, FastAPI, and Streamlit**. It ensures seamless data processing, integrity checks, and interactive financial data visualization.
+This project automates the ingestion, transformation, and validation of currency exchange rate data from **FRED** using **Snowflake and Streamlit**. It ensures seamless data processing, integrity checks, and interactive financial data visualization.
 
 ---
 ## **📌 Project Resources**
@@ -19,7 +19,7 @@ This project automates the ingestion, transformation, and validation of currency
 ## **📌 Architecture Diagram**
 <p align="center">
   <img src="https://github.com/yourusername/yourrepo/blob/main/architecture-diagram/fred_architecture_diagram.jpg" 
-       alt="Architecture Diagram" width="600">
+       alt="Architecture Diagram" width="600" height="600">
 </p>
 
 ---
