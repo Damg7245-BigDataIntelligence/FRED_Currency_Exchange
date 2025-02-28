@@ -1,5 +1,5 @@
 from snowflake.snowpark.functions import udf
-from snowflake.snowpark.types import FloatType, StringType
+from snowflake.snowpark.types import ArrayType, FloatType
 from snowflake.snowpark import Session
 from dotenv import load_dotenv
 import os
@@ -13,19 +13,25 @@ snowflake_params = {
     "user": os.getenv("SNOWFLAKE_USER"),
     "password": os.getenv("SNOWFLAKE_PASSWORD"),
     "database": "FRED_DB",
-    "schema": "HARMONIZED",  # Specify the functions schema
+    "schema": "HARMONIZED",
     "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
     "role": os.getenv("SNOWFLAKE_ROLE"),
 }
 
-# Define a Python function for forward filling
-def forward_fill(value, last_valid):
-    if value is not None and value != '.':
-        return float(value)
-    return last_valid
+# Define forward fill function
+def forward_fill(values):
+    filled_values = []
+    last_valid = None
+
+    for value in values:
+        if value is not None and not (isinstance(value, (int, float)) and value == 0):
+            last_valid = value  # Update last valid value if it's not NULL or 0
+        filled_values.append(last_valid)  # Fill with last valid value or None if none exists
+
+    return filled_values
+
 
 def main():
-    # Connect to Snowflake
     try:
         session = Session.builder.configs(snowflake_params).create()
         print("✅ Snowflake connection successful!")
@@ -33,24 +39,22 @@ def main():
         print("❌ Snowflake connection failed:", e)
         return
 
-    # Set the schema
     session.sql("USE SCHEMA HARMONIZED").collect()
 
     # Create a stage if it doesn't exist
     session.sql("CREATE STAGE IF NOT EXISTS my_stage").collect()
 
-    # Register the UDF
+    # Register UDF
     session.udf.register(
-        forward_fill,
-        return_type=FloatType(),
-        input_types=[StringType(), FloatType()],
+        func=forward_fill,
+        return_type=ArrayType(FloatType()),
+        input_types=[ArrayType(FloatType())],  # Accept an array of floats
         name="FORWARD_FILL_UDF",
         is_permanent=True,
         replace=True,
-        stage_location="@my_stage"  # Ensure this stage exists in Snowflake
+        stage_location="@my_stage"
     )
 
-    # Close session
     session.close()
     print("🔄 Snowflake session closed.")
 

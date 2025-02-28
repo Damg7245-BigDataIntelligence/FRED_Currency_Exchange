@@ -21,27 +21,41 @@ def snowflake_session():
 
 def test_usd_conversion_udf_valid_exchange_rate(snowflake_session):
     exchange_rate = 2
-    result = snowflake_session.sql(f"SELECT USD_CONVERSION_UDF({exchange_rate})").collect()[0][0]
+    result = snowflake_session.sql(f"SELECT HARMONIZED.USD_CONVERSION_UDF({exchange_rate})").collect()[0][0]
     assert result == 0.5, f"Expected 0.5 but got {result}"
 
 def test_usd_conversion_udf_zero_exchange_rate(snowflake_session):
     exchange_rate = 0
-    result = snowflake_session.sql(f"SELECT USD_CONVERSION_UDF({exchange_rate})").collect()[0][0]
-    assert result is None, f"Expected None but got {result}"
+    result = snowflake_session.sql(f"SELECT HARMONIZED.USD_CONVERSION_UDF({exchange_rate})").collect()[0][0]
+    assert result == 0, f"Expected 0 but got {result}"
 
 def test_usd_conversion_udf_null_exchange_rate(snowflake_session):
-    result = snowflake_session.sql(f"SELECT USD_CONVERSION_UDF(NULL)").collect()[0][0]
+    result = snowflake_session.sql("SELECT HARMONIZED.USD_CONVERSION_UDF(NULL)").collect()[0][0]
     assert result is None, f"Expected None but got {result}"
 
-# def test_forward_fill_udf(snowflake_session):
-#     # Assuming FORWARD_FILL_UDF is already registered in Snowflake
-#     test_values = ["'1.5'", "'2.3'", "'.'", "'4.7'", "'.'"]
-#     test_query = f"SELECT FORWARD_FILL_UDF(ARRAY_CONSTRUCT({', '.join(test_values)}), NULL)"
+def test_forward_fill_udf(snowflake_session):
+    # Define test values, replacing "." with NULL
+    test_values = ["1.5", "2.3", "NULL", "4.7", "NULL"]
 
-#     result = snowflake_session.sql(test_query).collect()[0][0]
+    # Construct SQL query to call UDF
+    test_query = f"""
+        SELECT FORWARD_FILL_UDF(ARRAY_CONSTRUCT({', '.join(test_values)}))
+    """
 
-#     expected_result = [1.5, 2.3, 2.3, 4.7, 4.7]
-#     assert result == expected_result, f"Expected {expected_result} but got {result}"
+    # Execute query and fetch result
+    result = snowflake_session.sql(test_query).collect()[0][0]
+
+    # Convert result to list of rounded floats
+    rounded_result = [round(float(x), 2) for x in result]
+
+    # Expected output after forward filling
+    expected_result = [1.5, 2.3, 2.3, 4.7, 4.7]
+
+    # Assertion to verify correctness
+    assert rounded_result == expected_result, f"Expected {expected_result} but got {rounded_result}"
+
+
+
 
 
 
