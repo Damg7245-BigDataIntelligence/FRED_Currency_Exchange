@@ -3,9 +3,6 @@ import pandas as pd
 import plotly.express as px
 import os
 from snowflake.snowpark import Session
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Page configuration
 st.set_page_config(
@@ -23,9 +20,9 @@ st.markdown("View daily and monthly currency exchange rate analytics from FRED d
 def create_snowflake_connection():
     # Get connection parameters from environment variables (set in GitHub secrets)
     connection_parameters = {
-        "account": os.getenv("SNOWFLAKE_ACCOUNT"),
-        "user": os.getenv("SNOWFLAKE_USER"),
-        "password": os.getenv("SNOWFLAKE_PASSWORD"),
+        "account": os.environ.get("SNOWFLAKE_ACCOUNT"),
+        "user": os.environ.get("SNOWFLAKE_USER"),
+        "password": os.environ.get("SNOWFLAKE_PASSWORD"),
         "role": "FRED_ROLE",
         "warehouse": "FRED_WH",
         "database": "FRED_DB"
