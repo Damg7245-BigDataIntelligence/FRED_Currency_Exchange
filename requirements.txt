@@ -5,3 +5,5 @@ python-dotenv
 snowflake-snowpark-python
 snowflake-cli-labs
 pytest
+streamlit
+plotly
