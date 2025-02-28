@@ -1,8 +1,6 @@
 --!jinja
  
 -- Create schemas based on environment
-ALTER SESSION SET ENV = '{{env}}';
-
 CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_RAW_SCHEMA";
 CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_HARMONIZED_SCHEMA";
 CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_ANALYTICS_SCHEMA";
@@ -11,8 +9,7 @@ CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_ANALYTICS_SCHEMA";
 CREATE OR REPLACE NOTEBOOK IDENTIFIER('"FRED_DB"."INTEGRATIONS"."{{env}}_load_raw_data"')
     FROM '@"FRED_DB"."INTEGRATIONS"."FRED_GIT_REPO"/branches/"{{branch}}"/steps/load_raw_data/'
     QUERY_WAREHOUSE = 'FRED_WH'
-    MAIN_FILE = 'load_raw_data.ipynb'
-    PARAMETERS = ('{"ENV":"{{env}}"}');
+    MAIN_FILE = 'load_raw_data.ipynb';
  
 ALTER NOTEBOOK "FRED_DB"."INTEGRATIONS"."{{env}}_load_raw_data" ADD LIVE VERSION FROM LAST;
  
@@ -20,8 +17,7 @@ ALTER NOTEBOOK "FRED_DB"."INTEGRATIONS"."{{env}}_load_raw_data" ADD LIVE VERSION
 CREATE OR REPLACE NOTEBOOK IDENTIFIER('"FRED_DB"."INTEGRATIONS"."{{env}}_harmonize_data"')
     FROM '@"FRED_DB"."INTEGRATIONS"."FRED_GIT_REPO"/branches/"{{branch}}"/steps/harmonized_data/'
     QUERY_WAREHOUSE = 'FRED_WH'
-    MAIN_FILE = 'harmonize_data.ipynb'
-    PARAMETERS = ('{"ENV":"{{env}}"}');
+    MAIN_FILE = 'harmonize_data.ipynb';
  
 ALTER NOTEBOOK "FRED_DB"."INTEGRATIONS"."{{env}}_harmonize_data" ADD LIVE VERSION FROM LAST;
  
@@ -29,8 +25,7 @@ ALTER NOTEBOOK "FRED_DB"."INTEGRATIONS"."{{env}}_harmonize_data" ADD LIVE VERSIO
 CREATE OR REPLACE NOTEBOOK IDENTIFIER('"FRED_DB"."INTEGRATIONS"."{{env}}_analytics"')
     FROM '@"FRED_DB"."INTEGRATIONS"."FRED_GIT_REPO"/branches/"{{branch}}"/steps/analytics/'
     QUERY_WAREHOUSE = 'FRED_WH'
-    MAIN_FILE = 'analytics.ipynb'
-    PARAMETERS = ('{"ENV":"{{env}}"}');
+    MAIN_FILE = 'analytics.ipynb';
  
 ALTER NOTEBOOK "FRED_DB"."INTEGRATIONS"."{{env}}_analytics" ADD LIVE VERSION FROM LAST;
  
