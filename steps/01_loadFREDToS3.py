@@ -9,8 +9,9 @@ from io import StringIO  # For handling CSV data in-memory
 # Load environment variables
 load_dotenv()
 
+
 # AWS Credentials
-aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+aws_access_key = os.getenv("AWS_ACCESS_KEY_ID") 
 aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 bucket_name = os.getenv("AWS_S3_BUCKET_NAME")
 
@@ -22,7 +23,7 @@ s3_client = boto3.client(
 )
 
 # FRED API Key
-FRED_KEY = "91d698d905ae8dcde262e03c9bb1b878"
+FRED_KEY = os.getenv("FRED_API_KEY")
 
 # Define S3 folder paths
 S3_PATHS = {
