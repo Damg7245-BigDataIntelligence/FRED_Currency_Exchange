@@ -1,6 +1,8 @@
 --!jinja
  
 -- Create schemas based on environment
+ALTER SESSION SET ENV = '{{env}}';
+
 CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_RAW_SCHEMA";
 CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_HARMONIZED_SCHEMA";
 CREATE SCHEMA IF NOT EXISTS "FRED_DB"."{{env}}_ANALYTICS_SCHEMA";
