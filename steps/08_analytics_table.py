@@ -52,10 +52,13 @@ def create_analytics_tables(session):
         CREATE OR REPLACE TABLE MONTHLY_DATA_METRICS AS
         SELECT
             MDATE,
+            EXINUS,
             EXUSEU_CONVERTED,
             EXUSUK_CONVERTED,
+            NULL AS rate_change_percent_exinus,
             NULL AS rate_change_percent_exuseu_converted,
             NULL AS rate_change_percent_exusuk_converted,
+            NULL AS volatility_exinus,
             NULL AS volatility_exuseu_converted,
             NULL AS volatility_exusuk_converted
         FROM HARMONIZED.HARMONIZED_MONTHLY_TBL
@@ -177,10 +180,22 @@ def create_stored_procedure(session):
           WITH monthly_metrics AS (
             SELECT
               MDATE,
+              EXINUS,
               EXUSEU_CONVERTED,
               EXUSUK_CONVERTED,
+              LAG(EXINUS) OVER (ORDER BY MDATE) AS prev_exinus,
               LAG(EXUSEU_CONVERTED) OVER (ORDER BY MDATE) AS prev_exuseu_converted,
               LAG(EXUSUK_CONVERTED) OVER (ORDER BY MDATE) AS prev_exusuk_converted,
+
+              CAST(
+                ROUND(
+                  COALESCE(
+                    STDDEV(EXINUS) OVER (ORDER BY MDATE),
+                    0
+                  ),
+                  4
+                ) AS NUMBER(10,4)
+              ) AS volatility_exinus,
 
               CAST(
                 ROUND(
@@ -209,6 +224,16 @@ def create_stored_procedure(session):
             CAST(
               ROUND(
                 COALESCE(
+                  ABS((EXINUS - prev_exinus) / NULLIF(prev_exinus, 0) * 100),
+                  0
+                ),
+                4
+              ) AS NUMBER(10,4)
+            ) AS rate_change_percent_exinus,
+
+            CAST(
+              ROUND(
+                COALESCE(
                   ABS((EXUSEU_CONVERTED - prev_exuseu_converted) / NULLIF(prev_exuseu_converted, 0) * 100),
                   0
                 ),
@@ -226,14 +251,17 @@ def create_stored_procedure(session):
               ) AS NUMBER(10,4)
             ) AS rate_change_percent_exusuk_converted,
 
+            volatility_exinus,
             volatility_exuseu_converted,
             volatility_exusuk_converted
           FROM monthly_metrics;
           
           UPDATE ANALYTICS.MONTHLY_DATA_METRICS
           SET
+            rate_change_percent_exinus = tmpm.rate_change_percent_exinus,
             rate_change_percent_exuseu_converted = tmpm.rate_change_percent_exuseu_converted,
             rate_change_percent_exusuk_converted = tmpm.rate_change_percent_exusuk_converted,
+            volatility_exinus = tmpm.volatility_exinus,
             volatility_exuseu_converted = tmpm.volatility_exuseu_converted,
             volatility_exusuk_converted = tmpm.volatility_exusuk_converted
           FROM TMP_UPDATED_MONTHLY_METRICS tmpm
