@@ -69,7 +69,9 @@ def create_stored_procedure(session):
         AS
         $$
         BEGIN
-          -- Create a temporary table with computed daily metrics
+          ------------------------------------------------------------------------------
+          -- 1) DAILY METRICS
+          ------------------------------------------------------------------------------
           CREATE OR REPLACE TEMPORARY TABLE TMP_UPDATED_DAILY_METRICS AS
           WITH daily_metrics AS (
             SELECT
@@ -80,16 +82,78 @@ def create_stored_procedure(session):
               LAG(DEXINUS) OVER (ORDER BY DDATE) AS prev_dexinus,
               LAG(DEXUSEU_CONVERTED) OVER (ORDER BY DDATE) AS prev_dexuseu_converted,
               LAG(DEXUSUK_CONVERTED) OVER (ORDER BY DDATE) AS prev_dexusuk_converted,
-              STDDEV(DEXINUS) OVER (ORDER BY DDATE) AS volatility_dexinus,
-              STDDEV(DEXUSEU_CONVERTED) OVER (ORDER BY DDATE) AS volatility_dexuseu_converted,
-              STDDEV(DEXUSUK_CONVERTED) OVER (ORDER BY DDATE) AS volatility_dexusuk_converted
+
+              /* Replace NULL volatility with 0, then round to 4 decimals */
+              CAST(
+                ROUND(
+                  COALESCE(
+                    STDDEV(DEXINUS) OVER (ORDER BY DDATE),
+                    0
+                  ),
+                  4
+                ) AS NUMBER(10,4)
+              ) AS volatility_dexinus,
+
+              CAST(
+                ROUND(
+                  COALESCE(
+                    STDDEV(DEXUSEU_CONVERTED) OVER (ORDER BY DDATE),
+                    0
+                  ),
+                  4
+                ) AS NUMBER(10,4)
+              ) AS volatility_dexuseu_converted,
+
+              CAST(
+                ROUND(
+                  COALESCE(
+                    STDDEV(DEXUSUK_CONVERTED) OVER (ORDER BY DDATE),
+                    0
+                  ),
+                  4
+                ) AS NUMBER(10,4)
+              ) AS volatility_dexusuk_converted
             FROM HARMONIZED.HARMONIZED_DAILY_TBL
           )
           SELECT
             DDATE,
-            CASE WHEN prev_dexinus IS NULL THEN NULL ELSE (DEXINUS - prev_dexinus) / NULLIF(prev_dexinus, 0) * 100 END AS rate_change_percent_dexinus,
-            CASE WHEN prev_dexuseu_converted IS NULL THEN NULL ELSE (DEXUSEU_CONVERTED - prev_dexuseu_converted) / NULLIF(prev_dexuseu_converted, 0) * 100 END AS rate_change_percent_dexuseu_converted,
-            CASE WHEN prev_dexusuk_converted IS NULL THEN NULL ELSE (DEXUSUK_CONVERTED - prev_dexusuk_converted) / NULLIF(prev_dexusuk_converted, 0) * 100 END AS rate_change_percent_dexusuk_converted,
+
+            /* 
+               Use ABS(...) to remove negatives, 
+               COALESCE(..., 0) to handle NULL if no previous row,
+               then ROUND(..., 4) for four decimals, 
+               and CAST to NUMBER(10,4).
+            */
+            CAST(
+              ROUND(
+                COALESCE(
+                  ABS((DEXINUS - prev_dexinus) / NULLIF(prev_dexinus, 0) * 100),
+                  0
+                ),
+                4
+              ) AS NUMBER(10,4)
+            ) AS rate_change_percent_dexinus,
+
+            CAST(
+              ROUND(
+                COALESCE(
+                  ABS((DEXUSEU_CONVERTED - prev_dexuseu_converted) / NULLIF(prev_dexuseu_converted, 0) * 100),
+                  0
+                ),
+                4
+              ) AS NUMBER(10,4)
+            ) AS rate_change_percent_dexuseu_converted,
+
+            CAST(
+              ROUND(
+                COALESCE(
+                  ABS((DEXUSUK_CONVERTED - prev_dexusuk_converted) / NULLIF(prev_dexusuk_converted, 0) * 100),
+                  0
+                ),
+                4
+              ) AS NUMBER(10,4)
+            ) AS rate_change_percent_dexusuk_converted,
+
             volatility_dexinus,
             volatility_dexuseu_converted,
             volatility_dexusuk_converted
@@ -106,7 +170,9 @@ def create_stored_procedure(session):
           FROM TMP_UPDATED_DAILY_METRICS tmp
           WHERE DAILY_DATA_METRICS.DDATE = tmp.DDATE;
           
-          -- Create a temporary table with computed monthly metrics
+          ------------------------------------------------------------------------------
+          -- 2) MONTHLY METRICS
+          ------------------------------------------------------------------------------
           CREATE OR REPLACE TEMPORARY TABLE TMP_UPDATED_MONTHLY_METRICS AS
           WITH monthly_metrics AS (
             SELECT
@@ -115,14 +181,51 @@ def create_stored_procedure(session):
               EXUSUK_CONVERTED,
               LAG(EXUSEU_CONVERTED) OVER (ORDER BY MDATE) AS prev_exuseu_converted,
               LAG(EXUSUK_CONVERTED) OVER (ORDER BY MDATE) AS prev_exusuk_converted,
-              STDDEV(EXUSEU_CONVERTED) OVER (ORDER BY MDATE) AS volatility_exuseu_converted,
-              STDDEV(EXUSUK_CONVERTED) OVER (ORDER BY MDATE) AS volatility_exusuk_converted
+
+              CAST(
+                ROUND(
+                  COALESCE(
+                    STDDEV(EXUSEU_CONVERTED) OVER (ORDER BY MDATE),
+                    0
+                  ),
+                  4
+                ) AS NUMBER(10,4)
+              ) AS volatility_exuseu_converted,
+
+              CAST(
+                ROUND(
+                  COALESCE(
+                    STDDEV(EXUSUK_CONVERTED) OVER (ORDER BY MDATE),
+                    0
+                  ),
+                  4
+                ) AS NUMBER(10,4)
+              ) AS volatility_exusuk_converted
             FROM HARMONIZED.HARMONIZED_MONTHLY_TBL
           )
           SELECT
             MDATE,
-            CASE WHEN prev_exuseu_converted IS NULL THEN NULL ELSE (EXUSEU_CONVERTED - prev_exuseu_converted) / NULLIF(prev_exuseu_converted, 0) * 100 END AS rate_change_percent_exuseu_converted,
-            CASE WHEN prev_exusuk_converted IS NULL THEN NULL ELSE (EXUSUK_CONVERTED - prev_exusuk_converted) / NULLIF(prev_exusuk_converted, 0) * 100 END AS rate_change_percent_exusuk_converted,
+
+            CAST(
+              ROUND(
+                COALESCE(
+                  ABS((EXUSEU_CONVERTED - prev_exuseu_converted) / NULLIF(prev_exuseu_converted, 0) * 100),
+                  0
+                ),
+                4
+              ) AS NUMBER(10,4)
+            ) AS rate_change_percent_exuseu_converted,
+
+            CAST(
+              ROUND(
+                COALESCE(
+                  ABS((EXUSUK_CONVERTED - prev_exusuk_converted) / NULLIF(prev_exusuk_converted, 0) * 100),
+                  0
+                ),
+                4
+              ) AS NUMBER(10,4)
+            ) AS rate_change_percent_exusuk_converted,
+
             volatility_exuseu_converted,
             volatility_exusuk_converted
           FROM monthly_metrics;
