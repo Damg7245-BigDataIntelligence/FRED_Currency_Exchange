@@ -1,7 +1,7 @@
 import streamlit as st
+import snowflake.connector
 import pandas as pd
 import os
-from snowflake.snowpark import Session
 
 # Page configuration
 st.set_page_config(
@@ -14,46 +14,50 @@ st.set_page_config(
 st.title("💱 FRED Currency Exchange Analytics")
 st.markdown("View daily and monthly currency exchange rate analytics from FRED data")
 
-# Function to create Snowflake connection
+# Snowflake connection function
 @st.cache_resource
 def create_snowflake_connection():
-    # Get connection parameters from environment variables (set in GitHub secrets)
-    connection_parameters = {
-        "account": os.environ.get("SNOWFLAKE_ACCOUNT"),
-        "user": os.environ.get("SNOWFLAKE_USER"),
-        "password": os.environ.get("SNOWFLAKE_PASSWORD"),
-        "role": "FRED_ROLE",
-        "warehouse": "FRED_WH",
-        "database": "FRED_DB"
-    }
-    
-    # Create and return the session
-    return Session.builder.configs(connection_parameters).create()
+    # Use Streamlit secrets in deployed environment, or environment variables for local development
+    if hasattr(st, "secrets"):
+        return snowflake.connector.connect(
+            user=st.secrets["snowflake"]["user"],
+            password=st.secrets["snowflake"]["password"],
+            account=st.secrets["snowflake"]["account"],
+            warehouse=st.secrets["snowflake"]["warehouse"],
+            database=st.secrets["snowflake"]["database"],
+            schema=st.secrets["snowflake"]["schema"]
+        )
+    else:
+        # Fallback to environment variables for local development
+        return snowflake.connector.connect(
+            user=os.environ.get("SNOWFLAKE_USER"),
+            password=os.environ.get("SNOWFLAKE_PASSWORD"),
+            account=os.environ.get("SNOWFLAKE_ACCOUNT"),
+            warehouse="FRED_WH",
+            database="FRED_DB",
+            schema="DEV_ANALYTICS_SCHEMA"
+        )
 
 # Connect to Snowflake
 try:
-    session = create_snowflake_connection()
+    conn = create_snowflake_connection()
     st.success("Connected to Snowflake successfully!")
 except Exception as e:
     st.error(f"Failed to connect to Snowflake: {e}")
     st.stop()
 
-# Environment selection
-env = st.selectbox("Select Environment", ["DEV", "PROD"], index=0)
-analytics_schema = f"{env}_ANALYTICS_SCHEMA"
-
 # Data type selection
 data_type = st.selectbox("Select Data Type", ["Daily", "Monthly"], index=0)
 
 # Function to fetch data based on selection
-def fetch_data(data_type, schema):
+def fetch_data(data_type, conn):
     if data_type == "Daily":
-        query = f"""
-        SELECT * FROM {schema}.DAILY_DATA_METRICS 
+        query = """
+        SELECT * FROM DAILY_DATA_METRICS 
         ORDER BY DDATE DESC 
         LIMIT 20
         """
-        df = session.sql(query).to_pandas()
+        df = pd.read_sql(query, conn)
         date_col = "DDATE"
         metrics = {
             "US-India Exchange Rate": "DEXINUS",
@@ -61,12 +65,12 @@ def fetch_data(data_type, schema):
             "US-UK Exchange Rate": "DEXUSUK_CONVERTED"
         }
     else:  # Monthly
-        query = f"""
-        SELECT * FROM {schema}.MONTHLY_DATA_METRICS 
+        query = """
+        SELECT * FROM MONTHLY_DATA_METRICS 
         ORDER BY MDATE DESC 
         LIMIT 20
         """
-        df = session.sql(query).to_pandas()
+        df = pd.read_sql(query, conn)
         date_col = "MDATE"
         metrics = {
             "US-India Exchange Rate": "EXINUS",
@@ -81,7 +85,7 @@ def fetch_data(data_type, schema):
 
 # Fetch data
 try:
-    df, df_plot, date_col, metrics = fetch_data(data_type, analytics_schema)
+    df, df_plot, date_col, metrics = fetch_data(data_type, conn)
     
     # Display the data table
     st.subheader(f"{data_type} Currency Exchange Data")
