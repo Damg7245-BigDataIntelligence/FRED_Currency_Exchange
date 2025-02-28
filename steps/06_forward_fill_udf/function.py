@@ -9,6 +9,7 @@ def forward_fill(values):
         if value is not None and value != '.':
             last_valid = float(value)
         filled_values.append(last_valid)
+    filled_values[0] = filled_values[1]  # Replace the first value with the second value
     return filled_values
 
 # Register the UDF with Snowflake
