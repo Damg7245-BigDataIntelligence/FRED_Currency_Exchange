@@ -1,9 +1,9 @@
 requests
-pandas
 boto3
 python-dotenv
-snowflake-snowpark-python
-snowflake-cli-labs
+snowflake-snowpark-python==1.12.0
+snowflake-cli-labs==0.1.0
 pytest
-streamlit
-plotly
+streamlit==1.42.0
+pandas==2.2.0
+plotly==5.18.0
