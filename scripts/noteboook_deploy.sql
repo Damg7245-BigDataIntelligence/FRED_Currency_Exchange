@@ -22,4 +22,3 @@ CREATE OR REPLACE NOTEBOOK IDENTIFIER('"FRED_DB"."{{env}}_{{schema3}}"."{{env}}_
     MAIN_FILE = 'analytics.ipynb';
  
 ALTER NOTEBOOK "FRED_DB"."{{env}}_{{schema3}}"."{{env}}_analytics" ADD LIVE VERSION FROM LAST;
- 
