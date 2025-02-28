@@ -6,7 +6,6 @@ from snowflake.snowpark.functions import col, min, max
 from snowflake.snowpark.window import Window
 from copy import copy
 
-
 # Load environment variables
 load_dotenv()
 
@@ -93,6 +92,14 @@ def create_harmonized_view(session, raw_data):
                 df_copy = copy(df)
                 base_df = df_copy if base_df is None else base_df.join(df_copy, on="MDATE", how="outer")
 
+        # Apply UDF to specific columns
+        if schema_name == "RAW_DAILY":
+            base_df = base_df.with_column("DEXUSEU_CONVERTED", F.call_udf("HARMONIZED.USD_CONVERSION_UDF", F.col("DEXUSEU")))
+            base_df = base_df.with_column("DEXUSUK_CONVERTED", F.call_udf("HARMONIZED.USD_CONVERSION_UDF", F.col("DEXUSUK")))
+        else:
+            base_df = base_df.with_column("EXUSEU_CONVERTED", F.call_udf("HARMONIZED.USD_CONVERSION_UDF", F.col("EXUSEU")))
+            base_df = base_df.with_column("EXUSUK_CONVERTED", F.call_udf("HARMONIZED.USD_CONVERSION_UDF", F.col("EXUSUK")))
+
         # Create view for daily and monthly separately
         view_name = f"HARMONIZED_{schema_name.split('_')[1]}_V".upper()
         base_df.create_or_replace_view(view_name)
@@ -131,7 +138,6 @@ def create_harmonized_stream(session, raw_data):
                 SHOW_INITIAL_ROWS = TRUE
             """).collect()
             print("Monthly Stream created successfully!")
-
 
 try:
     session = Session.builder.configs(snowflake_params).create()

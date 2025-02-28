@@ -1,6 +1,7 @@
 import os
 from snowflake.snowpark import Session
 from dotenv import load_dotenv
+import snowflake.snowpark.functions as F
 
 # Load environment variables
 load_dotenv()
@@ -17,66 +18,70 @@ snowflake_params = {
 }
 
 def create_analytics_tables(session):
-    # Create a table for daily exchange rate analytics
+    # Create a table for daily data metrics
     session.sql("""
-        CREATE OR REPLACE TABLE DAILY_EXCHANGE_RATE_ANALYTICS (
-            date STRING,
-            currency_pair STRING,
-            avg_value FLOAT,
-            volatility FLOAT,
-            rate_change_percent FLOAT
-        )
+        CREATE OR REPLACE TABLE DAILY_DATA_METRICS AS
+        SELECT
+            date,
+            usdtoinr,
+            usdtoeuro,
+            usdto_pound,
+            NULL AS rate_change_percent_usdtoinr,
+            NULL AS rate_change_percent_usdtoeuro,
+            NULL AS rate_change_percent_usdto_pound,
+            NULL AS volatility_usdtoinr,
+            NULL AS volatility_usdtoeuro,
+            NULL AS volatility_usdto_pound
+        FROM HARMONIZED.DAILY_TABLE
     """).collect()
 
-    # Create a table for monthly exchange rate analytics
+    # Create a table for monthly data metrics
     session.sql("""
-        CREATE OR REPLACE TABLE MONTHLY_EXCHANGE_RATE_ANALYTICS (
-            month_start_date STRING,
-            currency_pair STRING,
-            avg_value FLOAT,
-            volatility FLOAT,
-            rate_change_percent FLOAT
-        )
+        CREATE OR REPLACE TABLE MONTHLY_DATA_METRICS AS
+        SELECT
+            date,
+            usdtoinr,
+            usdtoeuro,
+            usdto_pound,
+            NULL AS rate_change_percent_usdtoinr,
+            NULL AS rate_change_percent_usdtoeuro,
+            NULL AS rate_change_percent_usdto_pound,
+            NULL AS volatility_usdtoinr,
+            NULL AS volatility_usdtoeuro,
+            NULL AS volatility_usdto_pound
+        FROM HARMONIZED.MONTHLY_TABLE
     """).collect()
 
 def create_stored_procedure(session):
-    # Define the stored procedure for updating exchange rate analytics
+    # Define the stored procedure for updating data metrics
     session.sql("""
-        CREATE OR REPLACE PROCEDURE UPDATE_EXCHANGE_RATE_ANALYTICS()
+        CREATE OR REPLACE PROCEDURE UPDATE_DATA_METRICS()
         RETURNS STRING
         LANGUAGE SQL
         AS
         $$
         BEGIN
-            -- Calculate daily analytics for each currency pair
-            FOR currency_pair IN ('USDINR', 'USDEUR', 'USDGBP') DO
-                EXECUTE IMMEDIATE
-                'INSERT INTO DAILY_EXCHANGE_RATE_ANALYTICS
-                SELECT
-                    date,
-                    ''' || currency_pair || ''' AS currency_pair,
-                    AVG(' || currency_pair || ') AS avg_value,
-                    STDDEV(' || currency_pair || ') AS volatility,
-                    (MAX(' || currency_pair || ') - MIN(' || currency_pair || ')) / NULLIF(MIN(' || currency_pair || '), 0) * 100 AS rate_change_percent
-                FROM HARMONIZED.HARMONIZED_CURRENCY_EXCHANGE
-                GROUP BY date';
-            END FOR;
+            -- Update daily metrics for each currency pair
+            UPDATE ANALYTICS.DAILY_DATA_METRICS
+            SET
+                rate_change_percent_usdtoinr = CASE WHEN LAG(usdtoinr) OVER (ORDER BY date) IS NULL THEN NULL ELSE (LAG(usdtoinr) OVER (ORDER BY date) - usdtoinr) / NULLIF(usdtoinr, 0) * 100 END,
+                rate_change_percent_usdtoeuro = CASE WHEN LAG(usdtoeuro) OVER (ORDER BY date) IS NULL THEN NULL ELSE (LAG(usdtoeuro) OVER (ORDER BY date) - usdtoeuro) / NULLIF(usdtoeuro, 0) * 100 END,
+                rate_change_percent_usdto_pound = CASE WHEN LAG(usdto_pound) OVER (ORDER BY date) IS NULL THEN NULL ELSE (LAG(usdto_pound) OVER (ORDER BY date) - usdto_pound) / NULLIF(usdto_pound, 0) * 100 END,
+                volatility_usdtoinr = STDDEV(usdtoinr) OVER (ORDER BY date),
+                volatility_usdtoeuro = STDDEV(usdtoeuro) OVER (ORDER BY date),
+                volatility_usdto_pound = STDDEV(usdto_pound) OVER (ORDER BY date);
 
-            -- Calculate monthly analytics for each currency pair
-            FOR currency_pair IN ('USDINR', 'USDEUR', 'USDGBP') DO
-                EXECUTE IMMEDIATE
-                'INSERT INTO MONTHLY_EXCHANGE_RATE_ANALYTICS
-                SELECT
-                    DATE_TRUNC(''MONTH'', date) AS month_start_date,
-                    ''' || currency_pair || ''' AS currency_pair,
-                    AVG(' || currency_pair || ') AS avg_value,
-                    STDDEV(' || currency_pair || ') AS volatility,
-                    (MAX(' || currency_pair || ') - MIN(' || currency_pair || ')) / NULLIF(MIN(' || currency_pair || '), 0) * 100 AS rate_change_percent
-                FROM HARMONIZED.HARMONIZED_CURRENCY_EXCHANGE
-                GROUP BY DATE_TRUNC(''MONTH'', date)';
-            END FOR;
+            -- Update monthly metrics for each currency pair
+            UPDATE ANALYTICS.MONTHLY_DATA_METRICS
+            SET
+                rate_change_percent_usdtoinr = CASE WHEN LAG(usdtoinr) OVER (ORDER BY date) IS NULL THEN NULL ELSE (LAG(usdtoinr) OVER (ORDER BY date) - usdtoinr) / NULLIF(usdtoinr, 0) * 100 END,
+                rate_change_percent_usdtoeuro = CASE WHEN LAG(usdtoeuro) OVER (ORDER BY date) IS NULL THEN NULL ELSE (LAG(usdtoeuro) OVER (ORDER BY date) - usdtoeuro) / NULLIF(usdtoeuro, 0) * 100 END,
+                rate_change_percent_usdto_pound = CASE WHEN LAG(usdto_pound) OVER (ORDER BY date) IS NULL THEN NULL ELSE (LAG(usdto_pound) OVER (ORDER BY date) - usdto_pound) / NULLIF(usdto_pound, 0) * 100 END,
+                volatility_usdtoinr = STDDEV(usdtoinr) OVER (ORDER BY date),
+                volatility_usdtoeuro = STDDEV(usdtoeuro) OVER (ORDER BY date),
+                volatility_usdto_pound = STDDEV(usdto_pound) OVER (ORDER BY date);
 
-            RETURN 'Exchange rate analytics updated successfully';
+            RETURN 'Data metrics updated successfully';
         END;
         $$;
     """).collect()
@@ -97,7 +102,7 @@ def main():
     create_stored_procedure(session)
 
     # Optionally, call the stored procedure to update analytics
-    session.sql("CALL UPDATE_EXCHANGE_RATE_ANALYTICS()").collect()
+    session.sql("CALL UPDATE_DATA_METRICS()").collect()
 
     # Close session
     session.close()
