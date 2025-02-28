@@ -4,6 +4,13 @@ import plotly.express as px
 import os
 from snowflake.snowpark import Session
 
+try:
+    import plotly.express as px
+except ImportError:
+    st.write("Installing plotly...")
+    os.system(f"{sys.executable} -m pip install plotly")
+    import plotly.express as px
+    
 # Page configuration
 st.set_page_config(
     page_title="FRED Currency Exchange Analytics",
