@@ -4,3 +4,4 @@ boto3
 python-dotenv
 snowflake-snowpark-python
 snowflake-cli-labs
+pytest
