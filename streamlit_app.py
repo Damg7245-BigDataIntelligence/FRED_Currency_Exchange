@@ -56,7 +56,7 @@ def fetch_data(data_type, conn):
         SELECT * FROM DAILY_DATA_METRICS 
         ORDER BY DDATE DESC 
         LIMIT 20
-        """
+        """ 
         df = pd.read_sql(query, conn)
         date_col = "DDATE"
         metrics = {
